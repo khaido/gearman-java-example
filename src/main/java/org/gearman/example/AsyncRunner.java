@@ -14,14 +14,19 @@ import org.gearman.worker.GearmanFunction;
 import org.gearman.worker.GearmanWorker;
 import org.gearman.worker.GearmanWorkerImpl;
 
-public class WorkerRunner {
+public class AsyncRunner implements Runnable {
 
     GearmanNIOJobServerConnection conn;
     List<Class<GearmanFunction>> functions;
     GearmanWorker worker = new GearmanWorkerImpl();
 
+    
     @SuppressWarnings(value = "unchecked")
-    public WorkerRunner(String host, int port,
+    public AsyncRunner() {
+    }
+    
+    @SuppressWarnings(value = "unchecked")
+    public AsyncRunner(String host, int port,
             List<Class<GearmanFunction>> funs) {
         conn = new GearmanNIOJobServerConnection(host, port);
         functions = new ArrayList<Class<GearmanFunction>>();
@@ -35,17 +40,16 @@ public class WorkerRunner {
         }
         
       	worker.work();
-      	
         
     }
     
-    public void stop() {
-//    	worker.unregisterAll();
-    	worker.stop();
-    	worker.shutdown();
-    }
+//    public void stop() {
+////    	worker.unregisterAll();
+//    	worker.stop();
+//    	worker.shutdown();
+//    }
 
-    @SuppressWarnings(value = "unchecked")
+/*    @SuppressWarnings(value = "unchecked")
     public static void main(String[] args) {
         List<Class<GearmanFunction>> functions =
                 new ArrayList<Class<GearmanFunction>>();
@@ -81,7 +85,7 @@ public class WorkerRunner {
             }
         }
 
-        new WorkerRunner(host, port,functions).start();
+        new AsyncRunner(host, port,functions).start();
     }
 
     public static void usage(PrintStream out) {
@@ -100,4 +104,27 @@ public class WorkerRunner {
             out.println(line);
         }
     }
+*/
+
+    public void startProcess() {
+        Thread t = new Thread(this);
+        t.start();
+    }
+    
+	public void run() {
+
+        String host = Constants.GEARMAN_DEFAULT_TCP_HOST;
+        int port = Constants.GEARMAN_DEFAULT_TCP_PORT;
+        List<Class<GearmanFunction>> functions =
+                new ArrayList<Class<GearmanFunction>>();
+
+        functions.add((Class<GearmanFunction>)(Class)EchoFunction.class);
+        functions.add((Class<GearmanFunction>)(Class)ReverseFunction.class);
+        functions.add((Class<GearmanFunction>)(Class)JenkinsJobStatus.class);
+        
+        functions.remove((Class<GearmanFunction>)(Class)ReverseFunction.class);
+		
+        new AsyncRunner(host, port,functions).start();
+		
+	}
 }
